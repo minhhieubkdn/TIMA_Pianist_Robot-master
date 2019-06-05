@@ -98,19 +98,6 @@ void PianoHand::PressKeys(uint8_t * keys, uint8_t value)
 		return;
 	}
 
-	/*for (uint8_t index = 0; index < 1; index++)
-	{
-		for (uint8_t i = 0; i < 5; i++)
-		{
-			if (fingers[i] == keys[index])
-			{
-				ServoManager->setChannelPWM(fingerPins[i], PWMMaker->pwmForAngle(pressAngle));
-				SkipBeat = value;
-
-				fingerState = PRESSING;
-			}
-		}
-	}*/	
 	uint16_t pwmAmout = PWMMaker->pwmForAngle(pressAngle);
 	for (uint8_t i = 0; i < 5; i++)
 	{
@@ -121,7 +108,7 @@ void PianoHand::PressKeys(uint8_t * keys, uint8_t value)
 			SkipBeat = value;
 
 			fingerState = PRESSING;
-			delay(500);
+			delay(50);
 			Serial.println(pwmAmout);
 			Serial.println("PRESSING");
 			Serial.println(pressAngle);

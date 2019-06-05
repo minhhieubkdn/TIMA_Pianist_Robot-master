@@ -7,6 +7,7 @@
 Sheet::Sheet()
 {
 	executeThread = MultiThread();
+	EEPROM.begin();
 }
 
 void Sheet::ReadNote()
@@ -30,10 +31,9 @@ void Sheet::SetTempo(int tem)
 	interval = (60000) / (tempo * 4);
 }
 
-void Sheet::SetSheet(String s, uint8_t handID)
+void Sheet::SetSheet(uint8_t handID, uint16_t startAddress, uint8_t notesSize)
 {
-	sheet[handID] = s;
-	convertToNotes(handID, s);
+	getNotesInEEPROM(handID, startAddress, notesSize);
 
 	getNewSection(handID);
 	Serial.println(destinationNoteOrder[handID]);
@@ -41,12 +41,6 @@ void Sheet::SetSheet(String s, uint8_t handID)
 	getNextNotes(handID);
 	Serial.println(pressNotes[handID][0]);
 	Serial.println(handPlacement[handID]);
-}
-
-void Sheet::AppendSheet(String lSheet, String rSheet)
-{
-	sheet[LEFT] = lSheet;
-	sheet[RIGHT] = rSheet;
 }
 
 void Sheet::Execute()
@@ -89,6 +83,21 @@ void Sheet::Execute()
 	Serial.println(getNoteName(hand[RIGHT]->GetCurrentPos()));
 	checkBeatForPress(RIGHT);
 	checkBeatForPress(LEFT);
+}
+
+void Sheet::getNotesInEEPROM(uint8_t handId, uint16_t startAdress, uint8_t notesLenght)
+{
+	Note _note;
+	for (uint16_t i = 0; i < notesLenght; i++)
+	{
+		EEPROM.get(startAdress + i * 2, _note);
+		delay(15);
+		notes[handId][i * 2] = _note.id;
+		notes[handId][i * 2 + 1] = _note.value;
+	}
+	notesSize[handId] = notesLenght;
+	Serial.println("complete read data from EEPROM");
+	printNotes(handId);
 }
 
 void Sheet::getNewSection(uint8_t handID)
@@ -144,6 +153,7 @@ void Sheet::doSomethingIdontKnow(uint8_t handID)
 	bool isGoOn = false;
 
 	int16_t handPlaceOrder = currentNoteOrder[handID];
+
 	while (handPlaceOrder < notesSize[handID])
 	{
 		if (notes[handID][handPlaceOrder] == RE)
@@ -412,32 +422,5 @@ int16_t Sheet::log2(int16_t n)
 			return i;
 		i++;
 		r *= 2;		
-	}
-}
-
-bool Sheet::warningConflict(uint8_t leftPos, uint8_t rightPos)
-{
-	uint8_t lPos = hand[LEFT]->GetCurrentPos();
-	uint8_t rPos = hand[RIGHT]->GetCurrentPos();
-
-	if (abs(lPos - rPos) < 8)
-	{
-		if (!hand[LEFT]->IsMoving())
-		{
-			hand[LEFT]->Release();
-			delay(UP_FINGER_TIME);
-			hand[LEFT]->Move(handPlacement[LEFT] - 5);
-		}
-		if (!hand[RIGHT]->IsMoving())
-		{
-			hand[RIGHT]->Release();
-			delay(UP_FINGER_TIME);
-			hand[RIGHT]->Move(handPlacement[RIGHT] + 5);
-		}
-		return true;
-	}
-	else
-	{
-		return false;
 	}
 }

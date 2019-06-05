@@ -11,7 +11,9 @@
 
 #include "PianoHand.h"
 #include "MultiThread.h"
+#include "Note.h"
 #include <math.h>
+#include <EEPROM.h>
 
 #define LEFT	0
 #define RIGHT	1
@@ -25,8 +27,7 @@ public:
 	void SetHandToneFa(PianoHand* hand);
 	void SetHandToneSol (PianoHand* hand);
 	void SetTempo(int tem);
-	void SetSheet(String s, uint8_t handID);
-	void AppendSheet(String lSheet, String rSheet);
+	void SetSheet(uint8_t handID, uint16_t startAddress, uint8_t notesSize);
 	void Execute();
 
 private:
@@ -39,15 +40,15 @@ private:
 
 	int16_t currentNoteOrder[2] = { 0, 0 };
 	int16_t destinationNoteOrder[2] = { 0, 0 };
-	String sheet[2];
 	uint16_t notesSize[2];
-	uint8_t notes[2][100];
+	uint8_t notes[2][102];
 	uint16_t interval = 500;
 	int tempo = 120;
 
 	MultiThread executeThread;
 	MultiThread releaseThread[2];
 
+	void getNotesInEEPROM(uint8_t handId, uint16_t startAdress, uint8_t notesLenght);
 	void getNewSection(uint8_t handID);
 	void getNextNotes(uint8_t handID);
 	void doSomethingIdontKnow(uint8_t handID);
@@ -66,9 +67,6 @@ private:
 
 	void printNotes(uint8_t handID);
 	int16_t log2(int16_t n);
-
-	bool warning = false;
-	bool warningConflict(uint8_t leftPos, uint8_t rightPos);
 };
 
 #endif

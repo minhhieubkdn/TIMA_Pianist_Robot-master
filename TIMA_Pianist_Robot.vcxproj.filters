@@ -50,6 +50,12 @@
     <ClInclude Include="Note.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="NotesBuffer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Shit.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="VirtualTimer.cpp">
@@ -71,6 +77,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Note.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NotesBuffer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Shit.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

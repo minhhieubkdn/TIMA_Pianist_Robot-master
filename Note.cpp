@@ -34,6 +34,17 @@ void SheetSaver::Init()
 	}
 }
 
+uint16_t SheetSaver::lenght()
+{
+	return this->notesLenght;
+}
+
+uint16_t SheetSaver::getLastAddress()
+{
+	lastAddress = notesLenght * sizeOfNote + startAddress;
+	return this->lastAddress;
+}
+
 void SheetSaver::SetNotesPointer(Note * notes)
 {
 	this->notes = notes;
@@ -44,8 +55,7 @@ void SheetSaver::AddNote(uint8_t noteID, uint8_t value)
 	Note _note;
 	_note.id = noteID;
 	_note.value = value;
-	this->notesLenght += 1;
-	this->notes[notesLenght] = _note;
+	AddNote(_note);
 }
 
 void SheetSaver::AddNote(String noteID, uint8_t value)
@@ -78,15 +88,26 @@ void SheetSaver::AddNote(String noteID, uint8_t value)
 		id = tone * 7 + order - 5 + 1;
 	note.id = id;
 	note.value = value;
-
-	this->notesLenght += 1;
-	this->notes[notesLenght] = note;
+	AddNote(note);
 }
 
 void SheetSaver::AddNote(Note note)
 {
-	this->notesLenght += 1;
-	this->notes[notesLenght] = note;
+	++notesLenght;
+	Note * _notes = new Note[notesLenght];
+	for (uint16_t i = 0; i < notesLenght - 1; i++)
+	{
+		_notes[i] = this->notes[i];
+	}
+
+	_notes[notesLenght - 1] = note;
+
+	if (this->notes != NULL)
+	{
+		delete[] notes;
+	}
+
+	this->notes = _notes;
 }
 
 Note SheetSaver::GetNoteAt(uint16_t address)
@@ -103,12 +124,16 @@ uint8_t SheetSaver::GetNoteID(uint16_t address)
 	return _note.id;
 }
 
+uint8_t SheetSaver::GetNoteValue(String keys)
+{
+	return uint8_t();
+}
+
 void SheetSaver::ConvertToNotes(String sheet)
 {
 	int idOrder = 0;
 	int spaceOrder1 = 0;
 	int spaceOrder2 = 1;
-	uint16_t noteOrder = 0;
 	int8_t noteValue = 1;
 
 	while (spaceOrder2 != sheet.length())
@@ -119,7 +144,6 @@ void SheetSaver::ConvertToNotes(String sheet)
 			spaceOrder2 = sheet.length();
 
 		String keyS = sheet.substring(spaceOrder1, spaceOrder2);
-
 		Serial.print(keyS);
 		Serial.print(" ");
 
@@ -139,21 +163,16 @@ void SheetSaver::ConvertToNotes(String sheet)
 
 		String noteS = keyS.substring(0, barOrder);
 		uint8_t noteID = getNoteID(noteS);
-
-		notes[noteOrder].id = noteID;
-		notes[noteOrder].value = noteValue;
-
-		noteOrder++;
-		notesLenght++;
+		AddNote(noteID, noteValue);
 	}
 }
 
-void SheetSaver::SaveToEEPROM(Note * notes)
+void SheetSaver::SaveToEEPROM()
 {
 	for (int i = 0; i < notesLenght; i++)
 	{
-		EEPROM.put(sizeOfNote * i + startAddress, notes[i]);
-		delay(10);
+		EEPROM.put(sizeOfNote * i + startAddress, this->notes[i]);
+		delay(5);
 	}
 }
 
@@ -187,13 +206,21 @@ uint8_t SheetSaver::getNoteID(String note)
 
 void SheetSaver::checkNotesData()
 {
-	
+	Serial.println("Starting check notes data...");
+	for (uint16_t i = 0; i < notesLenght; i++)
+	{
+		Serial.print(notes[i].id);
+		Serial.print("-");
+		Serial.print(notes[i].value);
+		Serial.print(" ");
+	}
 }
 
 void SheetSaver::checkDataInEEPROM()
 {
+	Serial.println("Starting check notes in EEPROM >>>");
 	Note note;
-	for (int i = startAddress; i < notesLenght; i++)
+	for (int i = 0; i < notesLenght; i++)
 	{
 		EEPROM.get(i*sizeOfNote + startAddress, note);
 		delay(5);

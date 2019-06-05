@@ -23,14 +23,17 @@ public:
 	SheetSaver();
 	SheetSaver(uint16_t startAddress);
 	void Init();
+	uint16_t lenght();
+	uint16_t getLastAddress();
 	void SetNotesPointer(Note * notes);
 	void AddNote(uint8_t noteID, uint8_t value);
 	void AddNote(String noteID, uint8_t value);
 	void AddNote(Note note);
 	Note GetNoteAt(uint16_t address);
 	uint8_t GetNoteID(uint16_t address);
+	uint8_t GetNoteValue(String keys);
 	void ConvertToNotes(String sheet);
-	void SaveToEEPROM(Note * notes);
+	void SaveToEEPROM();
 	uint8_t getNoteID(String note);
 	void checkNotesData();
 	void checkDataInEEPROM();

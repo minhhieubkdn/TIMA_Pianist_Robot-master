@@ -28,11 +28,22 @@
 #define RIGHT_PRESS_ANGLE 60
 #define RIGHT_RELEASE_ANGLE -30
 
-#define TEMPO 80
-#define SAVE_SHEET_TO_EEPROM
+#define TEMPO 120
 
+#define LEFT_SHEET "C3-2 G4 C4 G4 G3 D4 G4 D4 A3 E4 A4 E4 E3 B3 E4 B3 F3 C4 F4 C4 C3 G3 C4 G3 F3 C4-2 F4 C4 G3 D4 G4 D4 C4-2 G4 C4 G4 G3 D4 G4 D4 A3 E4 A4 E4 E3 B3 E4 B3 F3 C4 F4 C4 C3 G3 C4 G3 F3 C4 F4 C4 G3 D4"//"G4-2 D4 C4 G4 C4 G4 G3 D4 G4 D4 A3-2 E4 A4 E4 E3 B3 E4 B3 F3 C4 F4 C4 C3 G3 C4 G3 F3 C4 F4 C4 G3 D4 G4 B4 D5 RE-6 C4-2 G4 C4 G4"// "G3-2 D4 G4 D4 A3 E4 A4 E4 E3 B3 E4 B3 F3 C4 F4 C4 C3 G3 C4 G3 G3 D4 G4 B4 D5 RE-6 C4-2 G4 C4 G4 G3 D4 G4 D4 A3 E4 A4 E4 E3 B3 E4-2 B3 F3 C4 F4 C4 C3 G3 C4 G3 G3 D4 G4 B4 D5 RE-2 RE-4 C4 G4 C4 G4 G3 D4 G4 D4 F3 C4 F4 G4 A4-8"//*/
+#define RIGHT_SHEET "E6-8 D6 C6 B5 A5 G5 A5 B5 C6-2 C6 C6 C6 B5-4 G5 RE-2 A5-2 B5 C6 G5-4 E5 RE-2 A5-2 B5 C6 G5-4 E5 RE-2 A5-2 B5 C6 D6-8 C6-2 C6 C6 C6 B5-4 G5 RE-2 A5 B5 C6 G5-4 E5 RE-2 A5-2 B5 C6 G5-4 E5 RE-2 B5-4 C6-2 D6-8"//"RE-2 RE C6-2 D6 E6 E6-1 E6 E6-2 G6 G6-4 D6 RE-2 C6 C6 E6 E6-4 B5 RE-2 A5 A5 F6-2 E6 F6-1 E6 C6-2 D6-8 RE-4 C6 D6 E6 E6-1 E6 E6-2 G6 G6-4 D6-4 RE-2 C6-2 C6-2 E6-2 E6-4 B5-4 RE-2 A5-2 A5-2 F6-2 E6-2" //"F6-1 E6 C6-2 D6-8 RE-4 C6-4 C6-8 B5-2 C6-2 D6-2 C6-2 C6-8"//*/
+
+#define LEFT_START_ADDRESS 0
+#define RIGHT_START_ADDRESS 124
+
+#define LEFT_SHEET_LENGHT 50
+#define RIGHT_SHEET_LENGHT 50
+
+
+//#define SAVE_SHEET_TO_EEPROM
 
 #ifndef SAVE_SHEET_TO_EEPROM
+
 PianoHand* LeftHand;
 PianoHand* RightHand;
 
@@ -43,21 +54,21 @@ uint8_t LeftPins[5] = { 9, 8, 7, 6, 5 };
 
 PCA9685 servoManager = PCA9685(Wire, PCA9685_PhaseBalancer_Weaved);
 PCA9685_ServoEvaluator pwmMaker(128, 324, 526);
+
 #else
+
 SheetSaver leftSheetSaver;
 SheetSaver rightSheetSaver;
 Note * lNotes;
 Note * rNotes;
+
 #endif
 
 void setup()
 {
 #ifndef SAVE_SHEET_TO_EEPROM
-	//Sheet "Beautiful In White"
-	String rightSheet = "E5-8 D5 C5 B4 A4 G4 A4 B4 C5-2 C5 C5 C5 B4-4 G4";// RE-2 A4-2 B4 C5 G4-4 E4 RE-2 A4-2 B4 C5 G4-4 E4 RE-2 A4-2 B4 C5 D5-8";
-	String leftSheet = "C3-2 G3 C4 G3 G2 D3 G3 D3 A2 E3 A3 E3 E2 B2 E3 B2 F2 C3 F3 C3 C2 G2 C3 G2 F2 C3 F3 C3 G2 D3 G3 D3";//C3-2 G3 C4 G3 G2 D3 G3 D3 A2 E3 A3 E3 E2 B2 E3 B2 F2 C3 F3 C3 C2 G2 C3 G2 F2 C3 F3 C3 G2 D3 G3 D3";
-
 	Serial.begin(9600);
+	EEPROM.begin();
 	InitVirtualTimer();
 
 	LeftHand = new PianoHand();	
@@ -65,7 +76,7 @@ void setup()
 
 	InitServos();
 	InitHands();
-	InitPianoSheet(rightSheet, leftSheet);
+	InitPianoSheet();
 
 	Home();
 
@@ -73,30 +84,11 @@ void setup()
 #else
 	Serial.begin(9600);
 
-	String rightSheet = "E6-8 D6 C6 B5 A5 G5 A5 B5 C6-2 C6 C6 C6 B5-4 G5 RE-2 A5-2 B5 C6 G5-4 E5 RE-2 A5-2 B5 C6 G5-4 E5 RE-2 A5-2 B5 C6 D6-8 C6-2 C6 C6 C6";
-	String leftSheet = "C4-2 G4 C5 G4 G3 D4 G4 D4 A3 E4 A4 E4 E3 B3 E4 B3 F3 C4 F4 C4 C3 G3 C4 G3 F3 C4 F4 C4 G3 D4 G4 D4 C4-2 G4 C5 G4 G3 D4 G4 D4 A3 E4 A4";
-	
-	leftSheetSaver = SheetSaver(0);
-	rightSheetSaver = SheetSaver(512);
+	//clearEEPROM();
 
-	lNotes = new Note[256];
-	rNotes = new Note[256];
+	InitLeftSheetSaver();
+	InitRightSheetSaver();
 
-	leftSheetSaver.Init();
-	rightSheetSaver.Init();
-
-	leftSheetSaver.SetNotesPointer(lNotes);
-	rightSheetSaver.SetNotesPointer(rNotes);
-
-	/*leftSheetSaver.ConvertToNotes(leftSheet);
-	rightSheetSaver.ConvertToNotes(rightSheet);
-
-	leftSheetSaver.SaveToEEPROM(lNotes);
-	rightSheetSaver.SaveToEEPROM(rNotes);*/
-
-	leftSheetSaver.checkDataInEEPROM();
-	Serial.println("\n\n");
-	rightSheetSaver.checkDataInEEPROM();
 #endif
 }
 
@@ -106,12 +98,12 @@ void loop()
 	PianoSheet.Execute();
 #endif
 }
+
 #ifndef SAVE_SHEET_TO_EEPROM
 void InitVirtualTimer() 
 {
 	VirtualTimer.Init();
-
-	VirtualTimer.Add(ToggleStepPinX, 40);
+	VirtualTimer.Add(ToggleStepPinX, 30);
 	VirtualTimer.Add(ToggleStepPinZ, 40);
 	VirtualTimer.Run();
 }
@@ -141,14 +133,15 @@ void InitHands()
 	RightHand->SetActiveAngle(RIGHT_RELEASE_ANGLE, RIGHT_PRESS_ANGLE);
 }
 
-void InitPianoSheet(String RightSheet, String LeftSheet)
+void InitPianoSheet()
 {
 	PianoSheet.SetTempo(TEMPO);
-	PianoSheet.SetSheet(RightSheet, RIGHT);
-	PianoSheet.SetSheet(LeftSheet, LEFT);
+	PianoSheet.SetSheet(LEFT, LEFT_START_ADDRESS, LEFT_SHEET_LENGHT);
+	PianoSheet.SetSheet(RIGHT, RIGHT_START_ADDRESS, RIGHT_SHEET_LENGHT);
 
 	PianoSheet.SetHandToneFa(LeftHand);
 	PianoSheet.SetHandToneSol(RightHand);
+	
 	RightHand->Release();
 	LeftHand->Release();
 
@@ -267,5 +260,49 @@ void ToggleStepPinZ()
 }
 
 #else
+void clearEEPROM()
+{
+	for (uint16_t i = 0; i < EEPROM.length(); i++)
+	{
+		EEPROM.write(i, 0);
+		delay(6);
+	}
+}
+
+void InitLeftSheetSaver()
+{
+	String leftSheet = LEFT_SHEET;
+
+	leftSheetSaver = SheetSaver(LEFT_START_ADDRESS);
+	leftSheetSaver.Init();
+	leftSheetSaver.SetNotesPointer(lNotes);
+	leftSheetSaver.ConvertToNotes(leftSheet);
+	leftSheetSaver.SaveToEEPROM();
+	Serial.println("lsheet saved:");
+	leftSheetSaver.checkNotesData();
+	Serial.println("\nleft sheet lenght: ");
+	Serial.println(leftSheetSaver.lenght());
+	Serial.print("last ad: ");
+	Serial.println(leftSheetSaver.getLastAddress());
+	leftSheetSaver.checkDataInEEPROM();
+}
+
+void InitRightSheetSaver()
+{
+	String rightSheet = RIGHT_SHEET;
+
+	rightSheetSaver = SheetSaver(leftSheetSaver.lenght() * 2);
+	rightSheetSaver.Init();
+	rightSheetSaver.SetNotesPointer(rNotes);
+	rightSheetSaver.ConvertToNotes(rightSheet);
+	rightSheetSaver.SaveToEEPROM();
+	Serial.println("rSheet saved:");
+	rightSheetSaver.checkNotesData();
+	Serial.print("\nright sheet lenght: ");
+	Serial.println(rightSheetSaver.lenght());
+	Serial.print("last ad: ");
+	Serial.println(rightSheetSaver.getLastAddress());
+	rightSheetSaver.checkDataInEEPROM();
+}
 
 #endif
