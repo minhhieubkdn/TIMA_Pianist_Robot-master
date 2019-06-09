@@ -16,6 +16,14 @@ NotesBuffer::NotesBuffer(uint8_t _bufferSize)
 	notes = new Note[bufferSize];
 }
 
+NotesBuffer::~NotesBuffer()
+{
+	if (notes != NULL)
+	{
+		delete[] notes;
+	}
+}
+
 void NotesBuffer::GetNoteBuffer(uint16_t EEPROM_Address)
 {
 	Note _note;
@@ -24,6 +32,13 @@ void NotesBuffer::GetNoteBuffer(uint16_t EEPROM_Address)
 		EEPROM.get(EEPROM_Address + i * sizeOfNote, _note);
 		this->notes[i] = _note;
 	}
+
+	currentAddress = EEPROM_Address;
+}
+
+Note NotesBuffer::GetNoteAt(uint8_t index)
+{
+	return notes[index];
 }
 
 uint8_t NotesBuffer::CaculateBestPosition()

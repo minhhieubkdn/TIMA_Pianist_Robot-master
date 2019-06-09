@@ -41,7 +41,7 @@ private:
 	int16_t currentNoteOrder[2] = { 0, 0 };
 	int16_t destinationNoteOrder[2] = { 0, 0 };
 	uint16_t notesSize[2];
-	uint8_t notes[2][102];
+	uint8_t notes[2][200];
 	uint16_t interval = 500;
 	int tempo = 120;
 
